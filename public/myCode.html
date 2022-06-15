@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../dist/style.css">
+    <style>
+        .stage{
+            position: relative;
+        }
+        .grid{
+            width:50px;
+            height:50px;
+            display: inline-block;
+        }
+        .wall{
+            /* background-color:rgb(163, 61, 61);
+             */
+             background-image: url(../src/image/brick.png);
+             background-position: center;
+             background-size: cover;
+            outline: 1px solid #efefef;
+        }
+        .box{
+            background-image: url(../src/image/box.png);
+            background-repeat: no-repeat;
+            background-size: contain;
+        }
+        .player{
+            background-image: url(../src/image/player01.png);
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: 50%;
+        }
+        .target{
+            position: relative;
+        }
+        .target::before{
+            content: '';
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #73c673;
+        }
+        .target.box{
+            filter: grayscale(1);
+        }
+        .target.box::before, .player.target::before{
+            display: none;
+        }
+        .button-49,
+        .button-49:after {
+        width: 150px;
+        height: 76px;
+        line-height: 78px;
+        font-size: 20px;
+        font-weight:800;
+        font-family:'Courier New', Courier, monospace;
+        background: linear-gradient(45deg, transparent 5%, #FF013C 5%);
+        border: 0;
+        color: #fff;
+        letter-spacing: 3px;
+        box-shadow: 6px 0px 0px #00E6F6;
+        outline: transparent;
+        position: relative;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+        }
+
+        .button-49:after {
+        --slice-0: inset(50% 50% 50% 50%);
+        --slice-1: inset(80% -6px 0 0);
+        --slice-2: inset(50% -6px 30% 0);
+        --slice-3: inset(10% -6px 85% 0);
+        --slice-4: inset(40% -6px 43% 0);
+        --slice-5: inset(80% -6px 5% 0);
+        
+        content: 'Ehsan';
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, transparent 3%, #00E6F6 3%, #00E6F6 5%, #FF013C 5%);
+        text-shadow: -3px -3px 0px #F8F005, 3px 3px 0px #00E6F6;
+        clip-path: var(--slice-0);
+        }
+
+        .button-49:hover:after {
+        animation: 1s glitch;
+        animation-timing-function: steps(2, end);
+        }
+
+        @keyframes glitch {
+        0% {
+            clip-path: var(--slice-1);
+            transform: translate(-20px, -10px);
+        }
+        10% {
+            clip-path: var(--slice-3);
+            transform: translate(10px, 10px);
+        }
+        20% {
+            clip-path: var(--slice-1);
+            transform: translate(-10px, 10px);
+        }
+        30% {
+            clip-path: var(--slice-3);
+            transform: translate(0px, 5px);
+        }
+        40% {
+            clip-path: var(--slice-2);
+            transform: translate(-5px, 0px);
+        }
+        50% {
+            clip-path: var(--slice-3);
+            transform: translate(5px, 0px);
+        }
+        60% {
+            clip-path: var(--slice-4);
+            transform: translate(5px, 10px);
+        }
+        70% {
+            clip-path: var(--slice-2);
+            transform: translate(-10px, 10px);
+        }
+        80% {
+            clip-path: var(--slice-5);
+            transform: translate(20px, -10px);
+        }
+        90% {
+            clip-path: var(--slice-1);
+            transform: translate(-10px, 0px);
+        }
+        100% {
+            clip-path: var(--slice-1);
+            transform: translate(0);
+        }
+        }
+
+        @media (min-width: 768px) {
+        .button-49,
+        .button-49:after {
+            width: 200px;
+            height: 86px;
+            line-height: 88px;
+        }
+        }
+    </style>
+    <title>Sokoban</title>
+</head>
+<body class="">
+    <div class="flex justify-center" style="margin: 20px auto;">
+        <button class=" bg-orange-400 px-8 py-2 rounded-md rest">
+            reload
+        </button>
+    </div>
+<div class="flex space-x-4">
+    <div class="stage" style="font-size:0; margin: 0px auto;"></div>
+</div>
+    <div class="modal hidden">
+        <div class="flex items-center justify-center absolute top-40 left-[40%]">
+            <div class="w-96 h-60 bg-green-50 ">
+                <p class=" text-center bg-[#FF013C] py-3 text-xl font-medium">Level Complete</p>
+                <p class=" text-center text-3xl font-semibold py-7">Go to Level <span class="lvl"></span></p>
+                <div class="flex justify-center">
+                    <button class="button-49 go" onclick="goToNextLevel()">NEXT</button> 
+                </div>
+            </div>
+        </div>
+    </div>
+   <script>
+        class sokoBan{
+            constructor(){
+                this.initialization()
+            }
+            declareVariable(){
+                this.fullStage = document.querySelector('.stage')
+                this.grid = document.querySelectorAll('.grid')
+                this.currentStage = 1;
+
+            }
+            stage(){
+               this.stagelist = {
+                    1: {
+                        wall : [1,2,3,4,5,6,7,8,9,16,17,25,24,32,33,40,41,48,49,50,51,52,53,54,55,56],
+                        box : [20,27],
+                        target : [10,47],
+                        player : 28,
+                        row : 7,
+                        column : 8,
+                        },
+                    2: {
+                        wall: [3,4,5,11,13,19,21,22,23,24,25,26,27,32,33,38,39,40,41,42,43,44,46,52,54,60,61,62],
+                        box:[29,28,35,45],
+                        target:[12,31,34,53],
+                        player: 37,
+                        row: 8,
+                        column: 8 ,
+                    },
+                    3: {
+                        wall : [1,2,3,4,5,6,7,8,9,16,17,25,24,27,32,33,35,36,37,38,40,41,46,48,49,56,57,66,67,68,69,70,71,72,64],
+                        box : [29,44],
+                        target : [10,55],
+                        player : 30,
+                        row : 8,
+                        column : 8,
+                    },
+                    4: {
+                        wall : [3,4,5,11,13,19,21,22,23,24,25,26,27,32,33,38,39,40,41,42,43,44,46,52,54,60,61,62],
+                        box : [28,30,36,45],
+                        target : [31,34,53,12],
+                        player : 37,
+                        row : 8,
+                        column : 8,
+                    },
+                    5: {
+                        wall: [3,4,5,6,7,9,10,11,15,17,23,25,26,27,31,33,35,36,39,41,43,47,48,49,56,57,64,65,66,67,68,69,70,71,72],
+                        box:[20,29,37,50,52,53,54],
+                        target:[18,30,34,45,52,55,61],
+                        player: 19,
+                        row: 9,
+                        column: 8 
+                    }
+                }
+            }
+            initialization(){
+                this.declareVariable();
+                this.stage();
+                this.buildHtml();
+                this.keyMove();
+                this.goToNextLevel();
+                this.restGame()
+                
+            };
+            callFuncs(){
+            }
+            buildHtml(){
+                this.playerPosition = this.stagelist[this.currentStage].player
+                this.fullStage.style.width = 50*this.stagelist[this.currentStage].column + 'px';
+                this.fullStage.style.height = 50*this.stagelist[this.currentStage].row + 'px';
+                let html = ''
+                for(let i = 1; i <= this.stagelist[this.currentStage].row; i++){
+                    for( let x = 1; x <= this.stagelist[this.currentStage].column;x++){
+                        let cell = (i-1)*this.stagelist[this.currentStage].column + x;
+                        let classes = ' grid-id-'+cell;
+                        if(this.stagelist[this.currentStage].wall.includes(cell)){
+                            classes = classes + ' wall'
+                        }
+                        if(this.stagelist[this.currentStage].box.includes(cell)){
+                            classes = classes + ' box'
+                        }
+                        if(this.stagelist[this.currentStage].target.includes(cell)){
+                            classes = classes + ' target'
+                        }
+                        if(this.stagelist[this.currentStage].player == cell){
+                            classes = classes + ' player'
+                        }
+                        html = html + '<div class="grid' + classes +'"></div>';
+                    }
+                }
+                document.querySelector('.stage').innerHTML = html;
+            }
+
+            keyMove(){
+                let $this = this;
+                
+                document.onkeydown = function (event) {
+                    if(event.key == "ArrowUp"){
+                        $this.playerMove(-$this.stagelist[$this.currentStage].column)
+                    }
+                    else if(event.key == "ArrowDown"){
+                        $this.playerMove($this.stagelist[$this.currentStage].column)
+                    }
+                    else if(event.key == "ArrowLeft"){
+                        $this.playerMove(-1)
+                    }
+                    else if(event.key == "ArrowRight"){
+                        $this.playerMove(1)
+                    }
+                }
+            }
+            playerMove(moveTo,keyVal){
+                let $this = this;
+                let nextPosition = this.playerPosition + moveTo;
+                let nextGrid = document.querySelector('.grid-id-'+nextPosition);
+                let farGrid = document.querySelector('.grid-id-'+(this.playerPosition + moveTo*2));
+                let nextMove = true;
+                let boxMove = false;
+                let targetGrid = document.querySelectorAll('.target')
+                let modal = document.querySelector('.modal')
+                let lvl = document.querySelector('.lvl')
+                if(nextGrid.classList.contains('wall')){
+                    console.log(this.playerPosition, moveTo)
+                    nextMove = false;
+                }
+                else if(nextGrid.classList.contains('box')){
+                    if(farGrid.classList.contains('box') || farGrid.classList.contains('wall')){
+                        nextMove = false;
+                    }
+                    else{
+                        boxMove = true; 
+                    }
+
+                }
+                if(nextMove){
+                    document.querySelector('.grid-id-'+this.playerPosition).classList.remove('player')
+                    nextGrid.classList.add('player')
+                    this.playerPosition = nextPosition;
+                }
+                if (boxMove){
+                    nextGrid.classList.remove('box')
+                    farGrid.classList.add('box')
+                    let p= targetGrid.length;
+                    for(let i=0; i<targetGrid.length; i++){
+                        if(targetGrid[i].classList.contains('box')){
+                            p--;
+                            if(p==0){
+                                modal.classList.remove('hidden')
+                                if($this.stagelist[$this.currentStage+1]){
+                                lvl.innerHTML = $this.currentStage+1
+                            }
+                            else{
+                                lvl.closest('div').children[2].remove();
+                                lvl.parentElement.innerHTML = '<p class=" text-center text-3xl font-semibold py-7">Game Over</p>'
+                            }
+                            }
+                           
+                           
+                     }
+                    }
+ 
+                }
+            }
+            goToNextLevel(){
+                let $this = this
+                let go = document.querySelector('.go')
+                let modal = document.querySelector('.modal')
+                go.addEventListener('click', function(){
+                   $this.currentStage =  $this.currentStage+1;
+                   modal.classList.add('hidden')
+                   $this.buildHtml();
+                })
+            }
+            restGame(){
+                let $this = this;
+                let rest = document.querySelector('.rest')
+                rest.addEventListener('click', function(){
+                    window.location.reload()
+                })
+            }
+        }
+        let sokoban = new sokoBan();
+   </script>
+</body>
+</html>
